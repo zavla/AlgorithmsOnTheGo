@@ -83,7 +83,7 @@ func (G Graph) Edge(s, e rune) int {
 	}
 	return ret
 }
-func (G *Graph) getminvert(D map[rune]int, notIn map[rune]bool) (rune, bool) {
+func (G *Graph) shortestV(D map[rune]int, notIn map[rune]bool) (rune, bool) {
 
 	mincost := math.MaxInt64 //max int
 	minvert := rune(0)
@@ -127,7 +127,7 @@ func (G *Graph) deikstra_shortest_path(start rune) map[rune]int {
 	k := start //начинаем с вершины , она в цикле меняется
 	S[k] = true
 	for {
-		minVersh, none := G.getminvert(D, S) //находим минимум из длин дуг, вернет вершину к которой эта дуга
+		minVersh, none := G.shortestV(D, S) //находим минимум из длин дуг, вернет вершину к которой эта дуга
 		if none {
 			break
 		}

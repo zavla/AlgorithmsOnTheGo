@@ -26,7 +26,7 @@ func TestString(t *testing.T) {
 	G := make(Graph)
 	G.load(test1)
 
-	t.Errorf("%v", G)
+	//t.Errorf("%v", G)
 }
 func TestGraph_getminvert(t *testing.T) {
 	type args struct {
@@ -44,7 +44,7 @@ func TestGraph_getminvert(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, got1 := tt.G.getminvert(tt.args.D, tt.args.notIn)
+			got, got1 := tt.G.shortestV(tt.args.D, tt.args.notIn)
 			if got != tt.want {
 				t.Errorf("Graph.getminvert() got = %v, want %v", got, tt.want)
 			}
