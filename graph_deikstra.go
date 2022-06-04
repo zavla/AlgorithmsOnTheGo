@@ -75,6 +75,8 @@ func (G *Graph) load(from []struct {
 		(*G)[E.s][E.e] = E.cost
 	}
 }
+
+//Edge возвращает вес дуги из s в e, если его нет вернет maxInt64
 func (G Graph) Edge(s, e rune) int {
 
 	ret := math.MaxInt64
@@ -83,7 +85,10 @@ func (G Graph) Edge(s, e rune) int {
 	}
 	return ret
 }
-func (G *Graph) shortestV(D map[rune]int, notIn map[rune]bool) (rune, bool) {
+
+// nearest_neighbour выбирает ближайшего соседа.
+// D это список всех вершин с длинами путей до них, пока что нам известных.
+func (G *Graph) nearest_neigbour(D map[rune]int, notIn map[rune]bool) (rune, bool) {
 
 	mincost := math.MaxInt64 //max int
 	minvert := rune(0)
@@ -104,7 +109,8 @@ func (G *Graph) shortestV(D map[rune]int, notIn map[rune]bool) (rune, bool) {
 }
 
 func (G *Graph) deikstra_shortest_path(start rune) map[rune]int {
-	//инициализация D, это список _всех_ вершин графа
+	// инициализация D[i] длинами путей из start, остальные maxInt как будто путей нет.
+	// это список кратчайших путей пока что известных до _всех_ вершин графа.
 	D := make(maprune) //начальные значение в D это MaxInt64, что означает "нет пути"
 	for k := range *G {
 		//G это список списков, одна вершина может иметь дуги к некоторым вершинам.
@@ -121,28 +127,29 @@ func (G *Graph) deikstra_shortest_path(start rune) map[rune]int {
 	for k, kcost := range (*G)[start] {
 		D[k] = kcost
 	}
-
+	// -------конец инициализации
 	S := make(map[rune]bool) //список вершин про которые мы точно знаем кратчайший путь к ним
 
 	k := start //начинаем с вершины , она в цикле меняется
 	S[k] = true
 	for {
-		minVersh, none := G.shortestV(D, S) //находим минимум из длин дуг, вернет вершину к которой эта дуга
+		nearest, none := G.nearest_neigbour(D, S) //находим минимум из длин дуг, вернет вершину к которой эта дуга
 		if none {
-			break
+			break //ничего не выбрали потому что все обошли
 		}
-		for k := range D { //обновляем длины кратчайших путей через вершину minVersh
-			if _, ok := S[k]; ok && k != minVersh {
+		for k := range D { //обновляем длины кратчайших путей через вершину nearest
+
+			if _, ok := S[k]; ok && k != nearest { //если она в S или она текщая вершина тогда пропускаем
 				//если k уже в S то не обновляем длинну пути к ней, т.к. к ней уже не будет более короткого пути
 				continue
 			}
 			//если дуги нет то G.Edge вернет MaxInt64
-			if G.Edge(minVersh, k) != math.MaxInt64 && //нет пути из minVersh ->k
-				D[k] > D[minVersh]+G.Edge(minVersh, k) {
-				D[k] = D[minVersh] + G.Edge(minVersh, k)
+			if G.Edge(nearest, k) != math.MaxInt64 && //если есть путь из nearest->k
+				D[k] > D[nearest]+G.Edge(nearest, k) {
+				D[k] = D[nearest] + G.Edge(nearest, k)
 			}
 		}
-		S[minVersh] = true //вершину minVersh помещаем в список просмотренных
+		S[nearest] = true //вершину minVersh помещаем в список просмотренных
 	}
 	return D //вернет кратчайшие пути до каждой вершины
 }
