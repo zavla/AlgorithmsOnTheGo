@@ -1,3 +1,3 @@
-module myclass
+module algorithmsOnTheGo
 
 go 1.18
