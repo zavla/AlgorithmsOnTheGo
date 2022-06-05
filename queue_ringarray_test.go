@@ -16,8 +16,26 @@ func TestNewQueuering(t *testing.T) {
 		// TODO: Add test cases.
 		{},
 	}
+	testpassed := false
+	_ = testpassed
+	// defer func() {
+	// 	if !testpassed {
+	// 		t.Error("expects panic.")
+	// 	}
+	// }()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+
+			defer func() {
+				if err := recover(); err != nil {
+					if err == "oversize" {
+						testpassed = true
+					} else {
+						t.Error("test expects panic")
+					}
+				}
+			}()
+
 			q := NewQueuering[int](4)
 			if !q.Empty() {
 				t.Error("error in Empty()")
