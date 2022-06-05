@@ -1,4 +1,5 @@
-// сортировка выбором
+// сортировка выбором.
+// Selection sort.
 package main
 
 //слева от индекса i отсортированная часть, справа не отсортированная
@@ -15,11 +16,3 @@ func sort_vibor(a []string) {
 		}
 	}
 }
-
-// func main() {
-// 	a := []string{"abc", "abd", "bcd", "bbc"}
-
-// 	sort_vibor(a)
-
-// 	fmt.Println(a)
-// }
