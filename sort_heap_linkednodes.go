@@ -68,20 +68,78 @@ func (t *heap[T]) Add(el T) {
 }
 
 func (t *heap[T]) moveUp(n *treenode[T]) {
+	if n == nil {
+		return
+	}
 	p := n.up //p = parent
+	if p == nil {
+		return
+	}
 	for p.value < n.value {
 
-		if n == t.last {
+		if n == t.last { //т.е. из позиции "последний элемент" двигается вверх
 			t.last = p //новый последний элемент
 		}
-		t.swapPointers(p, n)
+		t.swapPositions(p, n)
 		p = n.up
 		if p == nil {
-			//this is root
+			//this is the root
 			t.root = n
 			break
 		}
 	}
+}
+
+func (t *heap[T]) swapPositions(above, under *treenode[T]) {
+
+	//начинаем с того узла что над верхним
+
+	//потом два узла что под нижним
+
+	//потом узел что под верхним на уровне нижнего
+
+	//потом сами два узла которые меняем местами
+	//всего 10 указателей
+
+	//1-й указатель
+	if above.up != nil {
+		if above.up.left == above {
+			above.up.left = under
+		} else {
+			above.up.right = under
+		}
+	}
+	//2-й
+	if under.left != nil {
+		under.left.up = above
+	}
+	//3-й
+	if under.right != nil {
+		under.right.up = above
+	}
+	//4-й это тот что либо справа либо слева от above, такой же как under
+	if above.right == under && above.left != nil {
+		above.left.up = under
+	}
+	if above.left == under && above.right != nil {
+		above.right.up = under
+	}
+	//5,6
+	under.up = above.up
+	above.up = under
+	//7,8
+	l, r := under.left, under.right //temp l r
+	if above.right == under {       //under был справа у above
+		under.right = above
+		under.left = above.left
+	} else {
+		under.left = above
+		under.right = above.right
+	}
+	//9,10
+	above.left = l
+	above.right = r
+
 }
 
 func (t *heap[T]) swapPointers(p *treenode[T], n *treenode[T]) {
@@ -108,6 +166,10 @@ func (t *heap[T]) findPenultimate() *treenode[T] { //Penultimate = penult = last
 		for wefrom.up != nil && wefrom.up.left == wefrom {
 			wefrom = wefrom.up
 		}
+		if wefrom.up != nil {
+			wefrom = wefrom.up.left
+
+		}
 		stepdown := wefrom
 		for stepdown.left != nil || stepdown.right != nil {
 			if stepdown.right != nil { //приоритет идти вправо
@@ -120,8 +182,7 @@ func (t *heap[T]) findPenultimate() *treenode[T] { //Penultimate = penult = last
 
 	} else {
 		//просто частынй случай
-		//последний узел это правый потомок
-		//левый потомок это предпоследний
+		//последний узел это правый потомок, а левый потомок это предпоследний
 		return t.last.up.left
 	}
 }
@@ -163,25 +224,25 @@ func (t *heap[T]) RemoveMax() {
 // moveDown - продвигает вниз узел пока значение в енм меньше большего из его потомков
 func (t *heap[T]) moveDown(v *treenode[T]) {
 	//выбрать того из двух с кем меняем местами v
-	var vtc *treenode[T]
+	var under *treenode[T]
 	for {
 		if v.left != nil && v.right != nil {
 			if v.left.value > v.right.value {
-				vtc = v.left
+				under = v.left
 			} else {
-				vtc = v.right
+				under = v.right
 			}
 
 		} else if v.left != nil {
-			vtc = v.left
+			under = v.left
 		} else if v.right != nil {
-			vtc = v.right
+			under = v.right
 		} else { //дошли до листа
 			break
 		}
-		if v.value > vtc.value {
-			t.swapPointers(v, vtc)
-			v = vtc
+		if v.value > under.value {
+			t.swapPositions(v, under)
+			v = under
 			continue
 		}
 		break
