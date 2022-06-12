@@ -1,16 +1,19 @@
 package main
 
 //Куча это структура которая бысто возвращает максимальный элемент.
-//Этот файл сортировка кучей, но куча на основании связного списка.
+//Здесь реализована куча, но куча на основании связного списка.
 //Особенность в том что надо хранить указатель на последний узел кучи, т.к. к нему есть частый доступ.
-//
+//При обмене узлов местами не забываем про 10 указателей которые надо поменять.
 
+// treenode - объект узел дерева
 type treenode[T ~int | ~float64] struct {
 	left, right *treenode[T]
 	up          *treenode[T] //указатель на родителя, нужен чтобы понимать какой узел потомок: левый или правый.
 	value       T            // data by value
 
 }
+
+// heap - сам объект куча
 type heap[T ~int] struct {
 	root *treenode[T]
 	last *treenode[T] //способность быстро обратиться к последнему узлу, иначе последний узел постоянно
@@ -67,6 +70,7 @@ func (t *heap[T]) Add(el T) {
 
 }
 
+// moveUp - двигает узел вверх пока значение в нем больше значения в родителе.
 func (t *heap[T]) moveUp(n *treenode[T]) {
 	if n == nil {
 		return
@@ -80,7 +84,7 @@ func (t *heap[T]) moveUp(n *treenode[T]) {
 		if n == t.last { //т.е. из позиции "последний элемент" двигается вверх
 			t.last = p //новый последний элемент
 		}
-		t.swapPositions(p, n)
+		t.swapNodes(p, n)
 		p = n.up
 		if p == nil {
 			//this is the root
@@ -90,7 +94,7 @@ func (t *heap[T]) moveUp(n *treenode[T]) {
 	}
 }
 
-func (t *heap[T]) swapPositions(above, under *treenode[T]) {
+func (t *heap[T]) swapNodes(above, under *treenode[T]) {
 
 	//начинаем с того узла что над верхним
 
@@ -140,18 +144,6 @@ func (t *heap[T]) swapPositions(above, under *treenode[T]) {
 	above.left = l
 	above.right = r
 
-}
-
-func (t *heap[T]) swapPointers(p *treenode[T], n *treenode[T]) {
-	up := p.up
-	left := p.left
-	right := p.right
-	p.up = n
-	p.left = n.left
-	p.right = n.right
-	n.up = up
-	n.left = left
-	n.right = right
 }
 
 func (t *heap[T]) findPenultimate() *treenode[T] { //Penultimate = penult = last but one
@@ -204,24 +196,36 @@ func (t *heap[T]) RemoveMax() {
 		return
 	}
 	newlast := t.findPenultimate()
+	//1
 	if t.last.up.right == t.last {
-		//отключить родителя от последнего
+		//отключить родителя последнего от последнего
 		t.last.up.right = nil
 	} else {
 		t.last.up.left = nil
 	}
-	t.root.left.up = t.last
-	t.root.right.up = t.last
+	//2
+	//отключаем t.root элемент т.к. его удаляем из кучи.
+	if t.root.left != nil {
+		t.root.left.up = t.last
+	}
+	//3
+	if t.root.right != nil {
+		t.root.right.up = t.last
+	}
+	//4
 	t.last.left = t.root.left
+	//5
 	t.last.right = t.root.right
+	//6
+	t.last.up = nil
 	t.root = t.last
 
+	t.last = newlast
 	t.moveDown(t.root)
 
-	t.last = newlast
 }
 
-// moveDown - продвигает вниз узел пока значение в енм меньше большего из его потомков
+// moveDown - продвигает вниз узел пока значение в нем меньше большего из его потомков.
 func (t *heap[T]) moveDown(v *treenode[T]) {
 	//выбрать того из двух с кем меняем местами v
 	var under *treenode[T]
@@ -240,9 +244,18 @@ func (t *heap[T]) moveDown(v *treenode[T]) {
 		} else { //дошли до листа
 			break
 		}
-		if v.value > under.value {
-			t.swapPositions(v, under)
-			v = under
+		if v.value < under.value {
+			//v продвигается вниз
+			t.swapNodes(v, under)
+			//now v holds pointers of under
+			//under now holds pointers ov v
+			//после swapNodes возможна смена root и возможна смена last
+			if under.up == nil {
+				t.root = under
+			}
+			if t.last == under {
+				t.last = v
+			}
 			continue
 		}
 		break

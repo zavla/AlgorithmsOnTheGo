@@ -58,5 +58,10 @@ func TestHeapLinkedNodes(t *testing.T) {
 		// 	   2	  3
 		// 	  /	\ 	/
 		//   -1  1	0
+		h.Add(-2)
+		h.RemoveMax()
+		if h.last.value != -2 {
+			t.Error("After RemoveMax we want -2 to become the last node.")
+		}
 	})
 }
