@@ -1,8 +1,45 @@
 package main
 
 import (
+	"math/rand"
 	"testing"
 )
+
+func BenchmarkHeapLinkedNodes_Add(b *testing.B) {
+	h := &heap[int]{}
+
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		h.Add(rand.Intn(101))
+	}
+
+}
+func BenchmarkHeapLinkedNodes_Remove(b *testing.B) {
+	b.ReportAllocs()
+
+	h := &heap[int]{}
+
+	//b.StopTimer()
+	for i := 0; i < b.N; i++ {
+		h.Add(rand.Intn(101))
+	}
+
+	for i := 0; i < b.N; i++ {
+		_ = h.GetMax()
+		h.RemoveMax()
+		//println(i, m)
+
+	}
+
+}
+
+func TestAdd100(t *testing.T) {
+	h := &heap[int]{}
+	for i := 0; i < 100; i++ {
+		h.Add(rand.Intn(101))
+	}
+}
 
 func TestHeapLinkedNodes(t *testing.T) {
 	t.Run("heap use", func(t *testing.T) {

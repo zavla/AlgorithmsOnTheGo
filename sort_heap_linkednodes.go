@@ -18,9 +18,13 @@ type heap[T ~int] struct {
 	root *treenode[T]
 	last *treenode[T] //способность быстро обратиться к последнему узлу, иначе последний узел постоянно
 	//приходится искать.
+	bufferBFS []*treenode[T] //используем один и тот же буффер чтобы обходить дерево BFS, findNodeAtWhichToAdd
 }
 
 func (t *heap[T]) GetMax() T {
+	if t.root == nil {
+		return T(0)
+	}
 	return t.root.value
 }
 
@@ -31,28 +35,50 @@ func (t *heap[T]) findNodeAtWhichToAdd() *treenode[T] {
 	//используем BFS т.к. он основан на очереди/списке с началом и концом и
 	//обходит дерево по уровням. Первый извлеченным из очереди который без одного или без двух потомком
 	//и есть тот узел к которому добавить последний елемент.
-	todo := make([]*treenode[T], 1)
-	todo[0] = t.root
+	if t.bufferBFS == nil {
+		//allocate once
+		t.bufferBFS = make([]*treenode[T], 1, 100)
+	} else {
+		t.bufferBFS = t.bufferBFS[:1] // we will overwrite old buffer
+	}
+
+	//todo := t.bufferBFS
+
+	t.bufferBFS[0] = t.root
 	if t.root == nil {
 
 		return nil
 	}
 	v := t.root
-	for i := 0; i < len(todo); i++ {
-		v = todo[i]
+	for i := 0; i < len(t.bufferBFS); i++ {
+		v = t.bufferBFS[i]
 		if v.left == nil || v.right == nil {
+
 			return v
 		}
-		todo = append(todo, v.left, v.right)
+		t.bufferBFS = append(t.bufferBFS, v.left, v.right)
 
 	}
 	return v
 
 }
 
+// Add() Complexcity O(N/2*(N+LogN)) + O(N/2*LogN)
 func (t *heap[T]) Add(el T) {
-	//добавляет значение в конец кучи
-	p := t.findNodeAtWhichToAdd()
+	//сначала добавляет значение в конец кучи.
+	//потом поднимает его куда надо.
+
+	//если последний элемент это левый потомок родителя то добавляем однозначно этому родителю.
+	p := t.last
+	if p != nil && p.up != nil && p.up.left == p {
+		//быстрая ветка Add=O(1) для добавления одного элемента
+		p.up.right = &treenode[T]{value: el, up: p.up}
+		t.last = p.up.right
+		t.moveUp(t.last)
+		return
+	}
+	//медленна ветка, O(N + LogN), для добавления одного элемента
+	p = t.findNodeAtWhichToAdd() //ишет используя BFS узел к которому можно добавить
 	if p == nil {
 		t.root = &treenode[T]{value: el}
 		t.last = t.root
@@ -61,11 +87,11 @@ func (t *heap[T]) Add(el T) {
 	if p.left == nil {
 		p.left = &treenode[T]{value: el, up: p}
 		t.last = p.left
-		t.moveUp(p.left)
+		t.moveUp(t.last)
 	} else {
 		p.right = &treenode[T]{value: el, up: p}
 		t.last = p.right
-		t.moveUp(p.right)
+		t.moveUp(t.last)
 	}
 
 }
@@ -173,7 +199,7 @@ func (t *heap[T]) findPenultimate() *treenode[T] { //Penultimate = penult = last
 		return stepdown
 
 	} else {
-		//просто частынй случай
+		//просто частный случай
 		//последний узел это правый потомок, а левый потомок это предпоследний
 		return t.last.up.left
 	}
